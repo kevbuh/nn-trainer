@@ -9,10 +9,12 @@ kubectl apply -f rabbitmq/svc.yaml
 helm install -f minio/minio-config.yaml -n minio-ns --create-namespace minio-proj bitnami/minio
 echo "waiting for minio and rabbitmq to start"
 
-sleep 10
+sleep 12
 
 kubectl apply -f minio/minio-external-service.yaml
 kubectl apply -f worker/deployment.yaml
+
+sleep 1
 
 kubectl port-forward svc/rabbitmq 5672:5672 &
 

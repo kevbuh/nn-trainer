@@ -33,11 +33,13 @@ app = Flask(__name__)
 def train():
     r = request.get_json()
 
-    # R DATA
-    batch_data = r.get("batch_data", np.random.randn(32, 784))
-    batch_labels = r.get("batch_labels", np.random.randint(0, 10, size=(32,)))
+    # REQUEST BODY
+    data = np.array(r.get("data", np.random.randn(320, 784)))
+    labels = np.array(r.get("labels", np.random.randint(0, 10, size=(320,))))
+    batch_size = r.get("batch_size", 32)
+    epochs = r.get("epochs", 1)
+    steps = r.get("steps", 3) # steps per batch per worker
     lr = r.get("lr", 0.01)
-    steps = r.get("steps", 10)
 
     # ADD TO MINIO
     encoded_model = r.get("model") # user uploads torchscript model
@@ -58,14 +60,25 @@ def train():
     client.fput_object(bucketname, model_hash, temp_path)
     os.remove(temp_path)
 
-    # SEND TO RABBITMQ
-    send_training_task(batch_data, batch_labels, model_hash, lr=lr, steps=int(steps))
+    # TRAINING LOOP
+    batches = (data.shape[0] + batch_size - 1) // batch_size
+    print(f"STARTING TRAINING RUN: {epochs=}, {batches=}")
+
+    for _ in range(epochs): # loops through all data
+        for i in range(batches): # loop through all batches
+            start_idx = i * batch_size
+            end_idx = min(start_idx + batch_size, data.shape[0])
+            batch_data = data[start_idx:end_idx]
+            batch_labels = labels[start_idx:end_idx]
+
+            # SEND TO RABBITMQ
+            send_training_task(batch_data, batch_labels, model_hash, lr=lr, steps=steps)
     
     return f"***POST /train --- Track progress with hash: {model_hash}"
 
-@app.route('/weights/<string:hash_id>', methods=['GET'])
-def weights(hash_id):
-    logger.info("GET /weights called")
+@app.route('/model/<string:hash_id>', methods=['GET'])
+def model(hash_id):
+    logger.info("GET /model called")
     # object_name = f"{hash_id}_weights"
     object_name = hash_id
 
@@ -76,14 +89,13 @@ def weights(hash_id):
         return send_file(temp_path, as_attachment=True)
     except Exception as e:
         return abort(404, description = f"Could not retrieve weights: {str(e)}")
-
-# @app.route('/inference', methods=['GET'])
-# def inference():
-#     # get model weights
-#     # get picture
-#     # output inference
-#     r = request.get_json()
     
-#     return "***GET /inference"
+@app.route('/status/<string:hash_id>', methods=['GET'])
+def status(hash_id):
+    logger.info("GET /weights called")
+    # object_name = f"{hash_id}_weights"
+    object_name = hash_id
+
+    return "***GET /status: training run {object_name} loss: "
 
 app.run(host="0.0.0.0", debug=True, port=5000)
