@@ -14,6 +14,9 @@ sleep 12
 kubectl apply -f minio/minio-external-service.yaml
 kubectl apply -f worker/deployment.yaml
 
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl apply -f worker/autoscale.yaml
+
 sleep 1
 
 kubectl port-forward svc/rabbitmq 5672:5672 &
