@@ -19,7 +19,7 @@ minioUser = os.getenv("MINIO_USER") or "rootuser"
 minioPasswd = os.getenv("MINIO_PASSWD") or "rootpass123"
 logger.info(f"connecting to minio...MINIO_HOST:{minioHost}")
 client = Minio(minioHost+":9000", secure=False, access_key=minioUser, secret_key=minioPasswd)
-bucketname='runs'
+bucketname='demobucket2'
 logger.info("checking minio connection...")
 if not client.bucket_exists(bucketname):
     client.make_bucket(bucketname)
@@ -44,7 +44,7 @@ def train():
     r = request.get_json()
 
     # ADD MODEL TO MINIO
-    encoded_model = r.get("model") # user uploads torchscript model
+    encoded_model = r.get("model") # user should upload torchscript model
     if not encoded_model:
         model = SimpleModel()
         scripted_model = torch.jit.script(model)
@@ -57,9 +57,11 @@ def train():
         temp_file.write(buffer.getvalue())
         temp_path = temp_file.name
 
+    # upload to minio
     client.fput_object(bucketname, model_hash, temp_path)
     os.remove(temp_path)
 
+    # send to rabbitmq
     send_training_task(model_hash, r)
     
     return model_hash, 200

@@ -6,10 +6,10 @@ all:
 	make push
 
 build:
-	docker build -t test-worker-image-74:latest .
+	docker build -t test-worker-image-86:latest .
 
 push:
-	docker tag test-worker-image-74 $(DOCKERUSER)/test-worker-image-74:$(VERSION)
-	docker push $(DOCKERUSER)/test-worker-image-74:$(VERSION)
-	docker tag test-worker-image-74 $(DOCKERUSER)/test-worker-image-74:latest
-	docker push $(DOCKERUSER)/test-worker-image-74:latest
+	docker tag test-worker-image-86 $(DOCKERUSER)/test-worker-image-86:$(VERSION)
+	docker push $(DOCKERUSER)/test-worker-image-86:$(VERSION)
+	docker tag test-worker-image-86 $(DOCKERUSER)/test-worker-image-86:latest
+	docker push $(DOCKERUSER)/test-worker-image-86:latest

@@ -21,7 +21,7 @@ minioUser = os.getenv("MINIO_USER") or "rootuser"
 minioPasswd = os.getenv("MINIO_PASSWD") or "rootpass123"
 logger.info(f"connecting to minio...MINIO_HOST:{minioHost}")
 client = Minio(minioHost+":9000", secure=False, access_key=minioUser, secret_key=minioPasswd)
-bucketname='runs'
+bucketname='demobucket2'
 
 logger.info("creating bucket...")
 if not client.bucket_exists(bucketname):
@@ -32,7 +32,7 @@ else:
 
 # RABBITMQ
 cluster_name = os.getenv("RABBITMQ_HOST") or "localhost"
-queue_name = os.getenv("RABBITMQ_QUEUE") or "bob"
+queue_name = os.getenv("RABBITMQ_QUEUE") or "model_queue"
 logger.info("")
 logger.info(f"connecting to rabbitmq...RABBITMQ_HOST:{cluster_name} and RABBITMQ_QUEUE:{queue_name}")
 logger.info("")

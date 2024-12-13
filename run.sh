@@ -1,9 +1,9 @@
 # point to docker
 export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin/"
 
-cd worker 
-make all
-cd ..
+# cd worker 
+# make all
+# cd ..
 
 kubectl apply -f rabbitmq/deploy.yaml
 kubectl apply -f rabbitmq/svc.yaml

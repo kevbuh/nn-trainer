@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn as nn
 
 cluster_name = "localhost"
-queue_name = "bob"
+queue_name = "model_queue"
 
 def my_hash(val):
     return hashlib.sha256(val.encode()).hexdigest()
