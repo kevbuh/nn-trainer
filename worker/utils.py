@@ -4,6 +4,7 @@ import json
 import torch
 import hashlib
 import tempfile
+import numpy as np
 import torch.nn as nn
 
 cluster_name = "localhost"
@@ -40,21 +41,36 @@ class SimpleModel(nn.Module): # for MNIST
     def forward(self, x):
         return self.fc(x)
 
-def send_training_task(batch_data, batch_labels, model_hash, lr=0.001):
+def send_training_task(model_hash, r):
     connection = pika.BlockingConnection(pika.ConnectionParameters(cluster_name))  
     channel = connection.channel()
     channel.queue_declare(queue=queue_name, durable=True)
 
-    # serialized_model_hash = my_hash(model)
+    # REQUEST BODY
+    data = np.array(r.get("data"))
+    labels = np.array(r.get("labels"))
+    batch_size = r.get("batch_size")
+    epochs = r.get("epochs")
+    lr = r.get("lr")
 
-    task = {
-        "hash_id": model_hash,
-        "data": batch_data.tolist(),
-        "learning_rate": lr,
-        "labels": batch_labels.tolist(),
-    }
+    # TRAINING LOOP
+    batches = (data.shape[0] + batch_size - 1) // batch_size
+    print(f"STARTING TRAINING RUN: {epochs=}, {batches=}")
 
-    channel.basic_publish(exchange="",routing_key=queue_name,body=json.dumps(task),properties=pika.BasicProperties(delivery_mode=2))
+    for _ in range(epochs): # loops through all data
+        for b in range(batches): # loop through all batches
+            start_idx = b * batch_size
+            end_idx = min(start_idx + batch_size, data.shape[0])
+            batch_data, batch_labels= data[start_idx:end_idx], labels[start_idx:end_idx]
 
-    print("Task added to mq")
-    # connection.close() # NOTE: how to close this connection without closing post request connection?
+            task = {
+                "hash_id": model_hash,
+                "data": batch_data.tolist(),
+                "labels": batch_labels.tolist(),
+                "learning_rate": lr,
+            }
+
+            channel.basic_publish(exchange="",routing_key=queue_name,body=json.dumps(task),properties=pika.BasicProperties(delivery_mode=2))
+
+    print("Training run queued to RabbitMQ")
+    connection.close() # NOTE: how to close this connection without closing post request connection?

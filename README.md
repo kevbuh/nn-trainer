@@ -21,6 +21,16 @@ chmod +x run.sh
 
 This will run the Flask server at http://127.0.0.1:5000. The amount of workers is handled by Kubernete's horizontal pod autoscaling. You can configure the max amount of worker in `worker/autoscale.yaml`.
 
+### Demo
+
+Once you have started the system up using the above commands, you can run the demo:
+
+```bash
+python3 demo.py
+```
+
+This will upload a simple MLP to the cloud and train it on MNIST. It will then download the model and then run inference and collect accuracy. Overall this should take about 3 minutes.
+
 ### Prometheus
 
 If you want to set up the basic Prometheus server:

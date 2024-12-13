@@ -13,6 +13,7 @@ import os
 import torch
 import requests
 import numpy as np
+from time import sleep
 from worker.utils import SimpleModel
 from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
@@ -28,23 +29,28 @@ labels = np.array([mnist_train[i][1] for i in range(len(mnist_train))])
 task = {
     "data": data.tolist(),
     "labels": labels.tolist(),
-    "batch_size": 32,
-    "epochs": 3,
-    "lr": 0.01
+    "batch_size": 128,
+    "epochs": 10,
+    "lr": 0.005
 }
 
 # train model
 print("Training model...")
 response = requests.post("http://localhost:5000/train", json=task)
 
+print("waiting 30s for model to train")
+sleep(30)
+
 # download model
+output_path = "models/trained_model.pth"
 model_hash = response.text
 print(f"Downloading model {model_hash}...")
-os.system(f"curl --output models/run1.pth http://127.0.0.1:5000/model/{model_hash}")
+# exit(0)
+os.system(f"curl --output {output_path} http://127.0.0.1:5000/model/{model_hash}")
 
 # load model
 simple_model = SimpleModel()
-model = torch.jit.load("models/run1.pth")
+model = torch.jit.load(output_path)
 model.eval()
 simple_model.eval()
 

@@ -44,7 +44,6 @@ def process_training_task(ch, method, properties, body):
     batch_data = np.array(task["data"])
     batch_labels = np.array(task["labels"])
     lr = task["learning_rate"]
-    model = None
 
     temp_path = "scriptmodule.pt"
     # with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -79,16 +78,6 @@ def process_training_task(ch, method, properties, body):
     client.fput_object(bucketname, task["hash_id"], temp_path)
     os.remove(temp_path)
 
-    # updated_task = {
-    #     "hash_id": task["hash_id"],
-    #     "steps": task["steps"] + 1,
-    #     "max_steps": task["max_steps"],
-    #     "learning_rate": lr,
-    #     "data": batch_data.tolist(),
-    #     "labels": batch_labels.tolist(),
-    # }
-
-    # ch.basic_publish(exchange='', routing_key=queue_name, body=json.dumps(updated_task), properties=pika.BasicProperties(delivery_mode=2))
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def consume_tasks():

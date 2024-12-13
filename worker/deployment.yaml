@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: worker
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: worker
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: kebu1560/test-worker-image-67:latest
+        image: kebu1560/test-worker-image-72:latest
         env:
         - name: RABBITMQ_HOST
           value: rabbitmq

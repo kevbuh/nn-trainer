@@ -33,23 +33,14 @@ app = Flask(__name__)
 def train():
     r = request.get_json()
 
-    # REQUEST BODY
-    data = np.array(r.get("data"))
-    labels = np.array(r.get("labels"))
-    batch_size = r.get("batch_size")
-    epochs = r.get("epochs")
-    lr = r.get("lr")
-
-    # ADD TO MINIO
+    # ADD MODEL TO MINIO
     encoded_model = r.get("model") # user uploads torchscript model
-
     if not encoded_model:
         model = SimpleModel()
         scripted_model = torch.jit.script(model)
         buffer = io.BytesIO()
         torch.jit.save(scripted_model, buffer)
 
-    # model_bytes = base64.b64decode(encoded_model)
     model_hash = hashlib.sha256(buffer.getvalue()).hexdigest()
 
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -59,18 +50,7 @@ def train():
     client.fput_object(bucketname, model_hash, temp_path)
     os.remove(temp_path)
 
-    # TRAINING LOOP
-    batches = (data.shape[0] + batch_size - 1) // batch_size
-    print(f"STARTING TRAINING RUN: {epochs=}, {batches=}")
-
-    for _ in range(epochs): # loops through all data
-        for b in range(batches): # loop through all batches
-            start_idx = b * batch_size
-            end_idx = min(start_idx + batch_size, data.shape[0])
-            batch_data, batch_labels= data[start_idx:end_idx], labels[start_idx:end_idx]
-
-            # SEND TO RABBITMQ
-            send_training_task(batch_data, batch_labels, model_hash, lr=lr)
+    send_training_task(model_hash, r)
     
     return model_hash, 200
 
