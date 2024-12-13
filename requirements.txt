@@ -4,3 +4,4 @@ torchvision
 minio
 pika
 requests
+redis

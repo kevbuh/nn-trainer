@@ -29,21 +29,28 @@ labels = np.array([mnist_train[i][1] for i in range(len(mnist_train))])
 task = {
     "data": data.tolist(),
     "labels": labels.tolist(),
-    "batch_size": 128,
-    "epochs": 10,
-    "lr": 0.005
+    "batch_size": 64,
+    "epochs": 5,
+    "lr": 0.01
 }
 
 # train model
-print("Training model...")
+print("Uploading model...")
 response = requests.post("http://localhost:5000/train", json=task)
+model_hash = response.text
 
-print("waiting 30s for model to train")
-sleep(30)
+print(f"Training model {model_hash}...")
+prev = None
+while True:
+    response = requests.get(f"http://localhost:5000/status/{model_hash}")
+    loss = response.text
+    print(f"Loss: {loss}")
+    if loss == prev: break
+    prev = loss
+    sleep(5)
 
 # download model
 output_path = "models/trained_model.pth"
-model_hash = response.text
 print(f"Downloading model {model_hash}...")
 # exit(0)
 os.system(f"curl --output {output_path} http://127.0.0.1:5000/model/{model_hash}")

@@ -1,7 +1,7 @@
 # Automatic Neural Network Training
 
 <div align="center" >
-  <img src="./public/PROJECT_DIAGRAM.png" alt="PROJECT_DIAGRAM">
+  <img src="./public/PROJECT DIAGRAM.svg" alt="PROJECT_DIAGRAM">
   <br/>
     CSCI 4253 Final Project: Automatic Neural Network Training
   <br/>

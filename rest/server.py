@@ -1,10 +1,10 @@
 import io
 import os
+import redis
 import torch
 import hashlib
 import logging
 import tempfile
-import numpy as np
 from minio import Minio
 from flask import Flask, request, abort, send_file
 from worker.utils import SimpleModel, send_training_task
@@ -26,6 +26,16 @@ if not client.bucket_exists(bucketname):
     logger.info(f"Bucket '{bucketname}' created successfully!")
 else:
     logger.info(f"Bucket '{bucketname}' already exists.")
+
+# REDIS
+redis_host = os.getenv("REDIS_HOST") or "localhost"
+redisClient = redis.StrictRedis(host=redis_host, port=6379, db=0)
+try:
+    if redisClient.ping():
+        logger.info("Connected to Redis successfully!")
+except redis.ConnectionError:
+    logger.info("Failed to connect to Redis.")
+    exit(1)
 
 app = Flask(__name__)
 
@@ -71,9 +81,10 @@ def model(hash_id):
 @app.route('/status/<string:hash_id>', methods=['GET'])
 def status(hash_id):
     logger.info("GET /weights called")
-    # object_name = f"{hash_id}_weights"
-    object_name = hash_id
-    loss = None
-    return f"***GET /status: training run {object_name} loss: {loss}"
+    loss = redisClient.get(hash_id)
+    if not loss:
+        return abort(404, description = f"Could not retrieve loss for hash: {hash_id}")
+    # return f"***GET /status: training run {object_name} loss: {loss}"
+    return loss.decode('utf-8'), 200
 
 app.run(host="0.0.0.0", debug=True, port=5000)

@@ -3,6 +3,7 @@ import io
 import json
 import pika
 import torch
+import redis
 import logging
 import tempfile
 import numpy as np
@@ -36,6 +37,16 @@ logger.info("")
 logger.info(f"connecting to rabbitmq...RABBITMQ_HOST:{cluster_name} and RABBITMQ_QUEUE:{queue_name}")
 logger.info("")
 
+# REDIS
+redis_host = os.getenv("REDIS_HOST") or "localhost"
+redisClient = redis.StrictRedis(host=redis_host, port=6379, db=0)
+try:
+    if redisClient.ping():
+        logger.info("Connected to Redis successfully!")
+except redis.ConnectionError:
+    logger.info("Failed to connect to Redis.")
+    exit(1)
+
 # PROCESS FROM QUEUE
 def process_training_task(ch, method, properties, body):
     task = json.loads(body)
@@ -65,8 +76,11 @@ def process_training_task(ch, method, properties, body):
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+    loss = loss.item()
+    logging.info(f"Processed batch. Loss: {loss}")
 
-    logging.info(f"Processed batch. Loss: {loss.item()}")
+    # send loss value to redis key-val store
+    redisClient.set(hash_id, loss)
 
     # SAVE MODEL TO MINIO
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -87,7 +101,6 @@ def consume_tasks():
     
     channel.basic_consume(queue=queue_name, on_message_callback=process_training_task)
     
-    logger.info("Waiting for tasks...")
     print("Waiting for tasks...")
     channel.start_consuming()
 
