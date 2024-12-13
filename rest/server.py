@@ -34,12 +34,11 @@ def train():
     r = request.get_json()
 
     # REQUEST BODY
-    data = np.array(r.get("data", np.random.randn(320, 784)))
-    labels = np.array(r.get("labels", np.random.randint(0, 10, size=(320,))))
-    batch_size = r.get("batch_size", 32)
-    epochs = r.get("epochs", 1)
-    steps = r.get("steps", 3) # steps per batch per worker
-    lr = r.get("lr", 0.01)
+    data = np.array(r.get("data"))
+    labels = np.array(r.get("labels"))
+    batch_size = r.get("batch_size")
+    epochs = r.get("epochs")
+    lr = r.get("lr")
 
     # ADD TO MINIO
     encoded_model = r.get("model") # user uploads torchscript model
@@ -65,16 +64,15 @@ def train():
     print(f"STARTING TRAINING RUN: {epochs=}, {batches=}")
 
     for _ in range(epochs): # loops through all data
-        for i in range(batches): # loop through all batches
-            start_idx = i * batch_size
+        for b in range(batches): # loop through all batches
+            start_idx = b * batch_size
             end_idx = min(start_idx + batch_size, data.shape[0])
-            batch_data = data[start_idx:end_idx]
-            batch_labels = labels[start_idx:end_idx]
+            batch_data, batch_labels= data[start_idx:end_idx], labels[start_idx:end_idx]
 
             # SEND TO RABBITMQ
-            send_training_task(batch_data, batch_labels, model_hash, lr=lr, steps=steps)
+            send_training_task(batch_data, batch_labels, model_hash, lr=lr)
     
-    return f"***POST /train --- Track progress with hash: {model_hash}"
+    return model_hash, 200
 
 @app.route('/model/<string:hash_id>', methods=['GET'])
 def model(hash_id):
@@ -95,7 +93,7 @@ def status(hash_id):
     logger.info("GET /weights called")
     # object_name = f"{hash_id}_weights"
     object_name = hash_id
-
-    return "***GET /status: training run {object_name} loss: "
+    loss = None
+    return f"***GET /status: training run {object_name} loss: {loss}"
 
 app.run(host="0.0.0.0", debug=True, port=5000)

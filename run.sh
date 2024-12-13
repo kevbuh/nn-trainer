@@ -23,4 +23,6 @@ kubectl port-forward svc/rabbitmq 5672:5672 &
 
 kubectl port-forward svc/minio-proj 9000:9000 -n minio-ns &
 
+./prometheus.sh
+
 python3 rest/server.py

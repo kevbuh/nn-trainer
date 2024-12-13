@@ -1,4 +1,6 @@
 Flask
 torch
+torchvision
 minio
 pika
+requests

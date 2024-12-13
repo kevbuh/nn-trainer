@@ -27,15 +27,20 @@ def serialize_model(model):
     # buffer.seek(0)
     # return base64.b64encode(buffer.read())#.decode('utf-8')
 
-class SimpleModel(nn.Module):
+class SimpleModel(nn.Module): # for MNIST
     def __init__(self):
         super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(784, 10)
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10)
+        )
 
     def forward(self, x):
         return self.fc(x)
 
-def send_training_task(batch_data, batch_labels, model_hash, lr=0.001, steps=10):
+def send_training_task(batch_data, batch_labels, model_hash, lr=0.001):
     connection = pika.BlockingConnection(pika.ConnectionParameters(cluster_name))  
     channel = connection.channel()
     channel.queue_declare(queue=queue_name, durable=True)
@@ -45,8 +50,6 @@ def send_training_task(batch_data, batch_labels, model_hash, lr=0.001, steps=10)
     task = {
         "hash_id": model_hash,
         "data": batch_data.tolist(),
-        "steps": 0,
-        "max_steps": steps,
         "learning_rate": lr,
         "labels": batch_labels.tolist(),
     }
@@ -54,4 +57,4 @@ def send_training_task(batch_data, batch_labels, model_hash, lr=0.001, steps=10)
     channel.basic_publish(exchange="",routing_key=queue_name,body=json.dumps(task),properties=pika.BasicProperties(delivery_mode=2))
 
     print("Task added to mq")
-    connection.close()
+    # connection.close() # NOTE: how to close this connection without closing post request connection?

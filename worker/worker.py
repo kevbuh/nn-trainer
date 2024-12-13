@@ -41,12 +41,6 @@ def process_training_task(ch, method, properties, body):
     task = json.loads(body)
 
     hash_id = task["hash_id"]
-    if task["steps"] > task["max_steps"]:
-        logging.info(f"model uploaded to minio: ./'{hash_id}'")
-        logging.info(f"Max steps for task {task['hash_id']} reached, removing from queue")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        return
-
     batch_data = np.array(task["data"])
     batch_labels = np.array(task["labels"])
     lr = task["learning_rate"]
@@ -59,8 +53,6 @@ def process_training_task(ch, method, properties, body):
     with open('scriptmodule.pt', 'rb') as f:
         buffer = io.BytesIO(f.read())
     model = torch.jit.load(buffer)
-    
-    # model = torch.jit.load(temp_path)
     os.remove(temp_path)
 
     inputs = torch.tensor(batch_data, dtype=torch.float32)
@@ -77,8 +69,7 @@ def process_training_task(ch, method, properties, body):
 
     logging.info(f"Processed batch. Loss: {loss.item()}")
 
-    # PUT BACK IN QUEUE
-
+    # SAVE MODEL TO MINIO
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         buffer = io.BytesIO()
         torch.jit.save(model, buffer)
@@ -88,16 +79,16 @@ def process_training_task(ch, method, properties, body):
     client.fput_object(bucketname, task["hash_id"], temp_path)
     os.remove(temp_path)
 
-    updated_task = {
-        "hash_id": task["hash_id"],
-        "steps": task["steps"] + 1,
-        "max_steps": task["max_steps"],
-        "learning_rate": lr,
-        "data": batch_data.tolist(),
-        "labels": batch_labels.tolist(),
-    }
+    # updated_task = {
+    #     "hash_id": task["hash_id"],
+    #     "steps": task["steps"] + 1,
+    #     "max_steps": task["max_steps"],
+    #     "learning_rate": lr,
+    #     "data": batch_data.tolist(),
+    #     "labels": batch_labels.tolist(),
+    # }
 
-    ch.basic_publish(exchange='', routing_key=queue_name, body=json.dumps(updated_task), properties=pika.BasicProperties(delivery_mode=2))
+    # ch.basic_publish(exchange='', routing_key=queue_name, body=json.dumps(updated_task), properties=pika.BasicProperties(delivery_mode=2))
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def consume_tasks():

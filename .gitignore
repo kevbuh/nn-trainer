@@ -1,4 +1,7 @@
 myvenv
 test.py
 plan.txt
-weights/*
+models/*
+data/*
+worker/__pycache__
+rest/__pycache__
