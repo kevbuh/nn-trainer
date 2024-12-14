@@ -9,7 +9,11 @@
   <br/>
 </div>
 
-### How to run
+A service that fully automates deep-learning training jobs. It works for any model and on any data, as I found a way to upload and download general PyTorch models using TorchScript. 
+
+You can upload a TorchScript model and NumPy dataset. You then make a POST request to /train that will create a new training job for you. The compute side of things will automatically be taken care of (no worrying about what GPU). You retrieve a hash ID which you can use to query /status/<hash_id> to retrieve the real-time status of your model’s loss. Once satisfied with the loss, or if the training job is done, you can send another GET request to /model/<hash_id> to download the model.
+
+### How to run (locally)
 
 Ensure that Docker and Kubernetes are installed on your machine and then run:
 
@@ -29,7 +33,7 @@ Once you have started the system up using the above commands, you can run the de
 python3 demo.py
 ```
 
-This will upload a simple MLP to the cloud and train it on MNIST. It will then download the model and then run inference and collect accuracy. Overall this should take about 3 minutes.
+This will upload a simple MLP to the cloud and train it on MNIST for 2 epochs. It will then download the model and then run inference and collect accuracy. Overall this should take about 3 minutes.
 
 ### Prometheus
 
@@ -44,43 +48,41 @@ You can then go to http://localhost:9090/query to see the metrics dashboard.
 
 ### API Routes
 
-Example:
-
 ```bash
-POST /train:
+POST /train: 
+- Create a training run
+- Returns a SHA-256 hash to track training run
 
 Body parameters
-- data: numpy batch data to train on
-- labels: numpy batch labels
 - model: upload a base64 encoded torchscript buffer
+- data: numpy data to train on
+- labels: numpy labels
 - lr: learning rate
-- steps: training steps per batch
 - epochs: number of times to iterate through entire data
 - batch_size: number of samples per batch
-
-curl -X POST -H "Content-Type: application/json" -d '{"lr": 0.1}' http://127.0.0.1:5000/train
 ```
 
-Example:
+```bash
+GET /status/<string:hash_id>
+- Returns latest batch loss from your training run
+```
 
 ```bash
 GET /model/<string:hash_id>
-
-curl --output output/run3.pth http://127.0.0.1:5000/model/62000807262c72a0af4c983b057077d22a44c2cca64205a7b1bce9753e3ee802
+- Downloads trained model to your machine
 ```
 
-### Components
+### Software
 
 - Kubernentes/Prometheus
 - PyTorch/TorchScript
 - MinIO
 - Flask
 - RabbitMQ
+- Redis
 
-### Interactions
+### Links
 
-Flask <-> RabbitMQ <-> Kubernetes worker <-> minio blob storage
-
-### Presentation
+Video: https://youtu.be/28F5CsZQOkM
 
 Google Presentation: https://docs.google.com/presentation/d/1k9oQsrNGXxIDuBNtueDJWNB6viMZAbZzK02bsGo-EB4/edit?usp=sharing
