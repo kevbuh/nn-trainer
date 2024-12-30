@@ -3,7 +3,7 @@
 <div align="center" >
   <img src="./public/PROJECT DIAGRAM.svg" alt="PROJECT_DIAGRAM">
   <br/>
-    CSCI 4253 Final Project: Automatic Neural Network Training
+    Automatic Neural Network Training
   <br/>
   Kevin Buhler
   <br/>
