@@ -9,9 +9,13 @@
   <br/>
 </div>
 
-A service that fully automates deep-learning training jobs. It works for any model and on any data, as I found a way to upload and download general PyTorch models using TorchScript. 
+A service that fully automates deep-learning training jobs. It works for any MLP model and data, as I found a way to upload and download general PyTorch models using TorchScript. 
 
-You can upload a TorchScript model and NumPy dataset. You then make a POST request to /train that will create a new training job for you. The compute side of things will automatically be taken care of (no worrying about what GPU). You retrieve a hash ID which you can use to query /status/<hash_id> to retrieve the real-time status of your model’s loss. Once satisfied with the loss, or if the training job is done, you can send another GET request to /model/<hash_id> to download the model.
+You can upload a TorchScript model and NumPy dataset. You then make a POST request to ```/train``` that will create a new training job for you. The compute side of things will automatically be taken care of (no worrying about what GPU). You retrieve a hash ID which you can use to query ```/status/<hash_id>``` to retrieve the real-time status of your model’s loss. Once satisfied with the loss, or if the training job is done, you can send another GET request to ```/model/<hash_id>``` to download the model.
+
+Presentation: https://youtu.be/28F5CsZQOkM
+
+Slideshow: https://docs.google.com/presentation/d/1k9oQsrNGXxIDuBNtueDJWNB6viMZAbZzK02bsGo-EB4/edit?usp=sharing
 
 ### How to run (locally)
 
@@ -81,8 +85,3 @@ GET /model/<string:hash_id>
 - RabbitMQ
 - Redis
 
-### Links
-
-Video: https://youtu.be/28F5CsZQOkM
-
-Google Presentation: https://docs.google.com/presentation/d/1k9oQsrNGXxIDuBNtueDJWNB6viMZAbZzK02bsGo-EB4/edit?usp=sharing
