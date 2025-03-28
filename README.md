@@ -1,9 +1,9 @@
-# Automatic Neural Network Training
+# Distributed Neural Network Training
 
 <div align="center" >
   <img src="./public/PROJECT DIAGRAM.svg" alt="PROJECT_DIAGRAM">
   <br/>
-    Automatic Neural Network Training
+    Distributed Neural Network Training
   <br/>
   Kevin Buhler
   <br/>
@@ -84,4 +84,3 @@ GET /model/<string:hash_id>
 - Flask
 - RabbitMQ
 - Redis
-
